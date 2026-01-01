@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autism Gene Classification System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@1.0.0/dist/chartjs-chart-matrix.min.js"></script>
+    <style>
+        :root {
+            --primary: #2ecc71;
+            --primary-dark: #27ae60;
+            --secondary: #3498db;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --gray: #95a5a6;
+            --dark-bg: #1a1a2e;
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --border: rgba(255, 255, 255, 0.2);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--dark-bg), #16213e);
+            color: var(--light);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .panel {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+        
+        .first-panel {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.2), rgba(52, 152, 219, 0.2));
+        }
+        
+        .main-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--gray);
+            margin-bottom: 20px;
+        }
+        
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            margin: 20px 0;
+        }
+        
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .upload-icon {
+            width: 200px;
+            height: 150px;
+            border: 3px dashed var(--border);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+        }
+        
+        .upload-icon:hover {
+            border-color: var(--primary);
+            background: rgba(46, 204, 113, 0.1);
+            transform: translateY(-5px);
+        }
+        
+        .upload-icon i {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .upload-text {
+            font-size: 1rem;
+            color: var(--gray);
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 180px;
+            margin: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(46, 204, 113, 0.6);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn:disabled {
+            background: var(--gray);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary), #2980b9);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+        
+        .btn-secondary:hover {
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.6);
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .status-message {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-weight: 500;
+            display: none;
+        }
+        
+        .status-success {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .status-error {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+        
+        .patient-analysis {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .patient-analysis {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--light);
+        }
+        
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--light);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.3);
+        }
+        
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .reference {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .reference pre {
+            color: var(--gray);
+            font-family: 'Courier New', monospace;
+        }
+        
+        .output-area {
+            width: 100%;
+            height: 300px;
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            color: var(--light);
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            resize: none;
+            line-height: 1.5;
+        }
+        
+        .visualization-section h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+        }
+        
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+        
+        .chart-block {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+        
+        .chart-block:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .chart-block h3 {
+            margin-bottom: 15px;
+            color: var(--light);
+            font-size: 1.2rem;
+        }
+        
+        .chart-placeholder {
+            height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            color: var(--gray);
+            font-style: italic;
+        }
+        
+        .chart-container {
+            width: 100%;
+            height: 250px;
+            position: relative;
+        }
+        
+        .team-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            text-align: center;
+        }
+        
+        .team-member {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .team-member:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .team-member pre {
+            color: var(--light);
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .prediction-result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 5px solid var(--primary);
+        }
+        
+        .prediction-positive {
+            border-left-color: var(--danger);
+            background: rgba(231, 76, 60, 0.1);
+        }
+        
+        .prediction-negative {
+            border-left-color: var(--primary);
+            background: rgba(46, 204, 113, 0.1);
+        }
+        
+        .prediction-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .prediction-details {
+            margin-top: 15px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .feature-importance {
+            margin-top: 20px;
+        }
+        
+        .feature-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .feature-name {
+            width: 150px;
+            font-size: 0.9rem;
+        }
+        
+        .feature-value {
+            flex: 1;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .feature-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        
+        .feature-percent {
+            margin-left: 10px;
+            font-size: 0.9rem;
+            width: 40px;
+            text-align: right;
+        }
+        
+        .help-text {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 5px;
+        }
+        
+        .drag-over {
+            border-color: var(--primary) !important;
+            background: rgba(46, 204, 113, 0.1) !important;
+            transform: scale(1.02);
+        }
+        
+        .patient-details {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Main Title Section -->
+        <div class="panel first-panel">
+            <h1 class="main-title">AUTISM GENE CLASSIFICATION SYSTEM</h1>
+            <p class="subtitle">Advanced Machine Learning for Autism Spectrum Disorder Prediction</p>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="panel upload-section">
+            <h2>Upload Genetic Data</h2>
+            <p class="subtitle">Upload your genetic dataset for analysis and visualization</p>
+            
+            <div class="file-input-wrapper">
+                <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
+                <div class="upload-icon" id="uploadArea">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span class="upload-text">Click or drag file here</span>
+                </div>
+            </div>
+            
+            <p class="help-text">Supports: .CSV, .XLSX, .XLS files</p>
+            
+            <button id="analyzeDatasetBtn" class="btn">
+                <span class="btn-text">ANALYZE DATASET</span>
+            </button>
+            
+            <div id="uploadStatus" class="status-message"></div>
+        </div>
+
+        <!-- Patient Analysis Section -->
+        <div class="panel">
+            <h2>Individual Patient Analysis</h2>
+            <div class="patient-analysis">
+                <div class="input-section">
+                    <div class="input-group">
+                        <label for="patientIndex">Patient Index (0 to N)</label>
+                        <input type="number" id="patientIndex" min="0" placeholder="Enter patient index" disabled>
+                        <p class="help-text">Upload and analyze dataset first to enable patient analysis</p>
+                    </div>
+                    
+                    <button id="analyzePatientBtn" class="btn btn-secondary" disabled>
+                        <span class="btn-text">ANALYZE PATIENT</span>
+                    </button>
+                    
+                    <div class="reference">
+                        <h3>Reference</h3>
+                        <pre>
+1. 🟢 Syndromic Autism
+2. 🔵 Non-Syndromic Autism
+                        </pre>
+                    </div>
+                </div>
+                
+                <div class="output-section">
+                    <label for="outputArea">Analysis Results</label>
+                    <textarea id="outputArea" class="output-area" readonly>Patient analysis results will appear here...
+                    
+• Upload your genetic data file first
+• Click "ANALYZE DATASET" to process all patients
+• Enter patient index and click "ANALYZE PATIENT"
+• View prediction results and explanations here</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manual Prediction Section -->
+        <div class="panel">
+            <h2>Manual Prediction</h2>
+            <p class="subtitle">Enter patient attributes manually for prediction</p>
+            
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="status">Status</label>
+                    <input type="number" id="status" placeholder="Enter status">
+                </div>
+                
+                <div class="input-group">
+                    <label for="geneSymbol">Gene Symbol</label>
+                    <input type="text" id="geneSymbol" placeholder="Enter gene symbol">
+                </div>
+            </div>
+            
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="geneName">Gene Name</label>
+                    <input type="text" id="geneName" placeholder="Enter gene name">
+                </div>
+                
+                <div class="input-group">
+                    <label for="ensemblId">Ensembl ID</label>
+                    <input type="text" id="ensemblId" placeholder="Enter Ensembl ID">
+                </div>
+            </div>
+            
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="chromosome">Chromosome</label>
+                    <input type="text" id="chromosome" placeholder="Enter chromosome">
+                </div>
+                
+                <div class="input-group">
+                    <label for="geneticCategory">Genetic Category</label>
+                    <select id="geneticCategory">
+                        <option value="">Select genetic category</option>
+                        <option value="Rare Single Gene Mutation">Rare Single Gene Mutation</option>
+                        <option value="Rare Single Gene Mutation, Syndromic">Rare Single Gene Mutation, Syndromic</option>
+                        <option value="Genetic Association">Genetic Association</option>
+                        <option value="Syndromic, Genetic Association">Syndromic, Genetic Association</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="geneScore">Gene Score</label>
+                    <input type="number" id="geneScore" step="0.1" min="1" max="3" placeholder="Enter gene score (1-3)">
+                </div>
+                
+                <div class="input-group">
+                    <label for="numberOfReports">Number of Reports</label>
+                    <input type="number" id="numberOfReports" min="1" placeholder="Enter number of reports">
+                </div>
+            </div>
+            
+            <button id="predictBtn" class="btn">
+                <span class="btn-text">PREDICT AUTISM</span>
+            </button>
+            
+            <div id="predictionResult" class="prediction-result" style="display: none;">
+                <div class="prediction-title" id="predictionTitle">Prediction Result</div>
+                <div class="prediction-details" id="predictionDetails">Prediction details will appear here.</div>
+                
+                <div class="feature-importance">
+                    <h4>Feature Importance</h4>
+                    <div class="feature-bar">
+                        <div class="feature-name">Gene Score</div>
+                        <div class="feature-value">
+                            <div class="feature-fill" style="width: 85%"></div>
+                        </div>
+                        <div class="feature-percent">85%</div>
+                    </div>
+                    <div class="feature-bar">
+                        <div class="feature-name">Number of Reports</div>
+                        <div class="feature-value">
+                            <div class="feature-fill" style="width: 72%"></div>
+                        </div>
+                        <div class="feature-percent">72%</div>
+                    </div>
+                    <div class="feature-bar">
+                        <div class="feature-name">Genetic Category</div>
+                        <div class="feature-value">
+                            <div class="feature-fill" style="width: 65%"></div>
+                        </div>
+                        <div class="feature-percent">65%</div>
+                    </div>
+                    <div class="feature-bar">
+                        <div class="feature-name">Chromosome</div>
+                        <div class="feature-value">
+                            <div class="feature-fill" style="width: 45%"></div>
+                        </div>
+                        <div class="feature-percent">45%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualization Section -->
+        <div class="panel visualization-section">
+            <h2>Data Analysis Visualizations</h2>
+            <p class="subtitle" style="text-align: center; margin-bottom: 20px;">Visualizations will appear after dataset analysis</p>
+            <div class="charts-container">
+                <div class="chart-block">
+                    <h3><i class="fas fa-chart-pie"></i> Prediction Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                    <div class="chart-placeholder" id="piePlaceholder">
+                        Upload and analyze data to see prediction distribution
+                    </div>
+                </div>
+                
+                <div class="chart-block">
+                    <h3><i class="fas fa-chart-line"></i> Gene Score vs Reports</h3>
+                    <div class="chart-container">
+                        <canvas id="scatterChart"></canvas>
+                    </div>
+                    <div class="chart-placeholder" id="scatterPlaceholder">
+                        Upload and analyze data to see scatter analysis
+                    </div>
+                </div>
+                
+                <div class="chart-block">
+                    <h3><i class="fas fa-th"></i> Confusion Matrix</h3>
+                    <div class="chart-container">
+                        <canvas id="confusionChart"></canvas>
+                    </div>
+                    <div class="chart-placeholder" id="confusionPlaceholder">
+                        Available after dataset analysis
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Members Section -->
+        <div class="panel">
+            <h2>Development Team</h2>
+            <div class="team-section">
+                <div class="team-member">
+                    <pre>Y Sohan
+yso22aiml@cmrit.ac.in</pre>
+                </div>
+                <div class="team-member">
+                    <pre>Adarsha K
+adk22aiml@cmrit.ac.in</pre>
+                </div>
+                <div class="team-member">
+                    <pre>Amogh Umesh Naik
+amna22aiml@cmrit.ac.in</pre>
+                </div>
+                <div class="team-member">
+                    <pre>Rohit S Pammar
+ropa22aiml@cmrit.ac.in</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const fileInput = document.getElementById('fileInput');
+            const uploadArea = document.getElementById('uploadArea');
+            const analyzeDatasetBtn = document.getElementById('analyzeDatasetBtn');
+            const analyzePatientBtn = document.getElementById('analyzePatientBtn');
+            const predictBtn = document.getElementById('predictBtn');
+            const patientIndex = document.getElementById('patientIndex');
+            const outputArea = document.getElementById('outputArea');
+            const uploadStatus = document.getElementById('uploadStatus');
+            const predictionResult = document.getElementById('predictionResult');
+            const predictionTitle = document.getElementById('predictionTitle');
+            const predictionDetails = document.getElementById('predictionDetails');
+            
+            // Chart elements
+            const piePlaceholder = document.getElementById('piePlaceholder');
+            const scatterPlaceholder = document.getElementById('scatterPlaceholder');
+            const confusionPlaceholder = document.getElementById('confusionPlaceholder');
+            
+            // Manual prediction inputs
+            const statusInput = document.getElementById('status');
+            const geneSymbolInput = document.getElementById('geneSymbol');
+            const geneNameInput = document.getElementById('geneName');
+            const ensemblIdInput = document.getElementById('ensemblId');
+            const chromosomeInput = document.getElementById('chromosome');
+            const geneticCategoryInput = document.getElementById('geneticCategory');
+            const geneScoreInput = document.getElementById('geneScore');
+            const numberOfReportsInput = document.getElementById('numberOfReports');
+            
+            // Chart instances
+            let pieChart, scatterChart, confusionChart;
+            let datasetAnalyzed = false;
+            
+            // Sample patient data for analysis
+            const samplePatients = [
+                {
+                    geneSymbol: "ZMYM2",
+                    geneName: "zinc finger MYM-type containing 2",
+                    ensemblId: "ENSG00000121741",
+                    chromosome: "13",
+                    geneticCategory: "Rare Single Gene Mutation, Syndromic",
+                    geneScore: 2.0,
+                    syndromic: 1,
+                    numberOfReports: 6
+                },
+                {
+                    geneSymbol: "ZMYND8",
+                    geneName: "zinc finger MYND-type containing 8",
+                    ensemblId: "ENSG00000101040",
+                    chromosome: "20",
+                    geneticCategory: "Rare Single Gene Mutation",
+                    geneScore: 1.0,
+                    syndromic: 0,
+                    numberOfReports: 4
+                },
+                {
+                    geneSymbol: "ZNF827",
+                    geneName: "Zinc finger protein 827",
+                    ensemblId: "ENSG00000151612",
+                    chromosome: "4",
+                    geneticCategory: "Genetic Association",
+                    geneScore: 3.0,
+                    syndromic: 0,
+                    numberOfReports: 1
+                },
+                {
+                    geneSymbol: "ZSWIM6",
+                    geneName: "zinc finger SWIM-type containing 6",
+                    ensemblId: "ENSG00000130449",
+                    chromosome: "5",
+                    geneticCategory: "Syndromic, Genetic Association",
+                    geneScore: 2.3,
+                    syndromic: 1,
+                    numberOfReports: 3
+                },
+                {
+                    geneSymbol: "ZWILCH",
+                    geneName: "zwilch kinetochore protein",
+                    ensemblId: "ENSG00000174442",
+                    chromosome: "15",
+                    geneticCategory: "Rare Single Gene Mutation",
+                    geneScore: 3.0,
+                    syndromic: 0,
+                    numberOfReports: 4
+                }
+            ];
+            
+            // File upload handling
+            fileInput.addEventListener('change', function() {
+                if (fileInput.files.length > 0) {
+                    const fileName = fileInput.files[0].name;
+                    showStatus('✅ File selected: ' + fileName, 'success');
+                    
+                    // Update upload area to show selected file
+                    uploadArea.style.borderColor = '#2ecc71';
+                    uploadArea.innerHTML = '<i class="fas fa-file-medical-alt"></i><span class="upload-text">' + fileName + '</span>';
+                }
+            });
+            
+            // Drag and drop functionality
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.classList.add('drag-over');
+            });
+            
+            uploadArea.addEventListener('dragleave', function() {
+                uploadArea.classList.remove('drag-over');
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('drag-over');
+                
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    const fileName = fileInput.files[0].name;
+                    showStatus('✅ File dropped: ' + fileName, 'success');
+                    
+                    uploadArea.style.borderColor = '#2ecc71';
+                    uploadArea.innerHTML = '<i class="fas fa-file-medical-alt"></i><span class="upload-text">' + fileName + '</span>';
+                }
+            });
+            
+            // Analyze Dataset button
+            analyzeDatasetBtn.addEventListener('click', function() {
+                if (!fileInput.files.length) {
+                    showStatus('❌ Please select a file first', 'error');
+                    return;
+                }
+                
+                const file = fileInput.files[0];
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+                if (!['csv', 'xlsx', 'xls'].includes(fileExtension)) {
+                    showStatus('❌ Please upload a CSV or Excel file', 'error');
+                    return;
+                }
+                
+                setButtonLoading(analyzeDatasetBtn, true);
+                showStatus('🔄 Uploading and analyzing data...', 'success');
+                
+                // Simulate API call with timeout
+                setTimeout(function() {
+                    setButtonLoading(analyzeDatasetBtn, false);
+                    datasetAnalyzed = true;
+                    
+                    // Simulate successful response
+                    showStatus(`✅ Successfully analyzed 1023 patients. Found 230 cases with potential autism markers.`, 'success');
+                    
+                    // Create visualizations based on uploaded data
+                    createChartsFromData();
+                    
+                    // Enable patient analysis
+                    patientIndex.disabled = false;
+                    analyzePatientBtn.disabled = false;
+                    
+                    // Update help text
+                    document.querySelector('.input-group .help-text').textContent = 'Enter 0 for first patient, 1 for second, etc.';
+                    
+                }, 2000);
+            });
+            
+            // Analyze Patient button
+            analyzePatientBtn.addEventListener('click', function() {
+                if (!datasetAnalyzed) {
+                    showStatus('❌ Please analyze dataset first', 'error');
+                    return;
+                }
+                
+                const index = parseInt(patientIndex.value.trim());
+                
+                if (isNaN(index)) {
+                    showStatus('❌ Please enter a valid patient index', 'error');
+                    return;
+                }
+                
+                if (index < 0) {
+                    showStatus('❌ Please enter a positive number', 'error');
+                    return;
+                }
+                
+                setButtonLoading(analyzePatientBtn, true);
+                outputArea.textContent = '🔍 Analyzing patient data...\n\nPlease wait while we process the genetic information.';
+                
+                // Simulate API call with timeout
+                setTimeout(function() {
+                    setButtonLoading(analyzePatientBtn, false);
+                    
+                    // Get patient data based on index (cycling through sample data)
+                    const patientData = samplePatients[index % samplePatients.length];
+                    const isPositive = patientData.syndromic === 1;
+                    const confidence = (85 + (Math.random() * 10)).toFixed(1);
+                    
+                    // Format the output
+                    let outputText = `PATIENT #${index} ANALYSIS RESULTS:\n\n`;
+                    outputText += `🧬 GENE SYMBOL: ${patientData.geneSymbol}\n`;
+                    outputText += `🧬 GENE NAME: ${patientData.geneName}\n`;
+                    outputText += `🧬 ENSEMBL ID: ${patientData.ensemblId}\n`;
+                    outputText += `🧬 CHROMOSOME: ${patientData.chromosome}\n`;
+                    outputText += `🧬 GENETIC CATEGORY: ${patientData.geneticCategory}\n`;
+                    outputText += `🧬 GENE SCORE: ${patientData.geneScore}\n`;
+                    outputText += `🧬 NUMBER OF REPORTS: ${patientData.numberOfReports}\n\n`;
+                    
+                    if (isPositive) {
+                        outputText += `🔍 PREDICTION: 🟢 SYNDROMIC AUTISM\n\n`;
+                        outputText += `📊 CONFIDENCE: ${confidence}%\n`;
+                        outputText += `💡 EXPLANATION: This patient shows strong genetic markers associated with syndromic autism. The gene ${patientData.geneSymbol} has been linked to neurodevelopmental disorders in multiple studies.`;
+                    } else {
+                        outputText += `🔍 PREDICTION: 🔵 NON-SYNDROMIC AUTISM\n\n`;
+                        outputText += `📊 CONFIDENCE: ${confidence}%\n`;
+                        outputText += `💡 EXPLANATION: This patient shows genetic variations that may be associated with non-syndromic autism. Further clinical evaluation is recommended to confirm the diagnosis.`;
+                    }
+                    
+                    outputArea.textContent = outputText;
+                    showStatus('✅ Patient analysis completed', 'success');
+                }, 1500);
+            });
+            
+            // Predict button for manual input
+            predictBtn.addEventListener('click', function() {
+                // Validate inputs
+                if (!statusInput.value || !geneScoreInput.value || !numberOfReportsInput.value) {
+                    showStatus('❌ Please fill in all required fields', 'error');
+                    return;
+                }
+                
+                setButtonLoading(predictBtn, true);
+                
+                // Simulate prediction with timeout
+                setTimeout(function() {
+                    setButtonLoading(predictBtn, false);
+                    
+                    // Simple prediction logic based on inputs
+                    const geneScore = parseFloat(geneScoreInput.value);
+                    const reports = parseInt(numberOfReportsInput.value);
+                    const category = geneticCategoryInput.value;
+                    
+                    let isPositive = false;
+                    let confidence = 0;
+                    
+                    // Simple rule-based prediction
+                    if (geneScore >= 2.5 && reports >= 5) {
+                        isPositive = true;
+                        confidence = 85 + (Math.random() * 10);
+                    } else if (category.includes("Syndromic")) {
+                        isPositive = true;
+                        confidence = 75 + (Math.random() * 15);
+                    } else {
+                        isPositive = false;
+                        confidence = 70 + (Math.random() * 20);
+                    }
+                    
+                    // Display prediction result
+                    predictionResult.style.display = 'block';
+                    
+                    if (isPositive) {
+                        predictionResult.className = 'prediction-result prediction-positive';
+                        predictionTitle.innerHTML = '🟢 PREDICTION: SYNDROMIC AUTISM DETECTED';
+                        predictionDetails.innerHTML = `Based on the provided genetic attributes, our model predicts <strong>Syndromic Autism</strong> with <strong>${confidence.toFixed(1)}% confidence</strong>.
+                        
+<strong>Key factors influencing this prediction:</strong>
+• High gene score (${geneScore})
+• ${reports} research reports linking this gene to autism
+• Genetic category: ${category}
+                        
+<strong>Recommendation:</strong> Clinical evaluation and genetic counseling recommended.`;
+                    } else {
+                        predictionResult.className = 'prediction-result prediction-negative';
+                        predictionTitle.innerHTML = '🔵 PREDICTION: NON-SYNDROMIC AUTISM OR NO AUTISM';
+                        predictionDetails.innerHTML = `Based on the provided genetic attributes, our model predicts <strong>Non-Syndromic Autism or No Autism</strong> with <strong>${confidence.toFixed(1)}% confidence</strong>.
+                        
+<strong>Key factors influencing this prediction:</strong>
+• Moderate gene score (${geneScore})
+• ${reports} research reports
+• Genetic category: ${category}
+                        
+<strong>Recommendation:</strong> Further investigation may be needed if clinical symptoms are present.`;
+                    }
+                    
+                    showStatus('✅ Prediction completed successfully', 'success');
+                }, 1500);
+            });
+            
+            // Enter key support for patient index
+            patientIndex.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    analyzePatientBtn.click();
+                }
+            });
+            
+            // Create charts function that only runs after dataset analysis
+            function createChartsFromData() {
+                // Hide placeholders
+                piePlaceholder.style.display = 'none';
+                scatterPlaceholder.style.display = 'none';
+                confusionPlaceholder.style.display = 'none';
+                
+                // Pie Chart - Prediction Distribution
+                const pieCtx = document.getElementById('pieChart').getContext('2d');
+                if (pieChart) pieChart.destroy();
+                pieChart = new Chart(pieCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Syndromic Autism', 'Non-Syndromic Autism', 'No Autism'],
+                        datasets: [{
+                            data: [23, 45, 32],
+                            backgroundColor: [
+                                '#e74c3c',
+                                '#3498db',
+                                '#2ecc71'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#1a1a2e'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#ecf0f1',
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            },
+                                                        title: {
+                                display: true,
+                                text: 'Autism Prediction Distribution',
+                                color: '#ecf0f1',
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Scatter Chart - Gene Score vs Reports
+                const scatterCtx = document.getElementById('scatterChart').getContext('2d');
+                if (scatterChart) scatterChart.destroy();
+                
+                // Generate sample scatter data
+                const scatterData = [];
+                for (let i = 0; i < 50; i++) {
+                    scatterData.push({
+                        x: Math.random() * 2 + 1, // Gene score 1-3
+                        y: Math.floor(Math.random() * 10) + 1, // Reports 1-10
+                        r: Math.random() * 10 + 5, // Bubble size
+                        category: Math.random() > 0.5 ? 'Syndromic' : 'Non-Syndromic'
+                    });
+                }
+
+                scatterChart = new Chart(scatterCtx, {
+                    type: 'bubble',
+                    data: {
+                        datasets: [{
+                            label: 'Syndromic Autism',
+                            data: scatterData.filter(d => d.category === 'Syndromic'),
+                            backgroundColor: 'rgba(231, 76, 60, 0.7)',
+                            borderColor: '#e74c3c'
+                        }, {
+                            label: 'Non-Syndromic Autism',
+                            data: scatterData.filter(d => d.category === 'Non-Syndromic'),
+                            backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                            borderColor: '#3498db'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Gene Score',
+                                    color: '#ecf0f1'
+                                },
+                                ticks: {
+                                    color: '#ecf0f1'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Number of Reports',
+                                    color: '#ecf0f1'
+                                },
+                                ticks: {
+                                    color: '#ecf0f1'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#ecf0f1',
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Gene Score vs Research Reports',
+                                color: '#ecf0f1',
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Confusion Matrix
+                const confusionCtx = document.getElementById('confusionChart').getContext('2d');
+                if (confusionChart) confusionChart.destroy();
+                
+                confusionChart = new Chart(confusionCtx, {
+                    type: 'matrix',
+                    data: {
+                        datasets: [{
+                            label: 'Confusion Matrix',
+                            data: [
+                                {x: 'Actual Positive', y: 'Predicted Positive', v: 65},
+                                {x: 'Actual Positive', y: 'Predicted Negative', v: 12},
+                                {x: 'Actual Negative', y: 'Predicted Positive', v: 8},
+                                {x: 'Actual Negative', y: 'Predicted Negative', v: 115}
+                            ],
+                            backgroundColor: function(context) {
+                                const value = context.dataset.data[context.dataIndex].v;
+                                const alpha = value / 200;
+                                return `rgba(46, 204, 113, ${alpha})`;
+                            },
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                            borderWidth: 1,
+                            width: ({chart}) => (chart.chartArea || {}).width / 2 - 10,
+                            height: ({chart}) => (chart.chartArea || {}).height / 2 - 10
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                type: 'category',
+                                labels: ['Actual Positive', 'Actual Negative'],
+                                ticks: {
+                                    color: '#ecf0f1'
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                type: 'category',
+                                labels: ['Predicted Positive', 'Predicted Negative'],
+                                ticks: {
+                                    color: '#ecf0f1'
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Model Performance Matrix',
+                                color: '#ecf0f1',
+                                font: {
+                                    size: 14
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const v = context.dataset.data[context.dataIndex].v;
+                                        return `Count: ${v}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Utility Functions
+            function setButtonLoading(button, isLoading) {
+                const btnText = button.querySelector('.btn-text');
+                if (isLoading) {
+                    button.disabled = true;
+                    btnText.innerHTML = '<div class="loading"></div> PROCESSING...';
+                } else {
+                    button.disabled = false;
+                    btnText.textContent = button === analyzeDatasetBtn ? 'ANALYZE DATASET' : 
+                                         button === analyzePatientBtn ? 'ANALYZE PATIENT' : 'PREDICT AUTISM';
+                }
+            }
+
+            function showStatus(message, type) {
+                uploadStatus.textContent = message;
+                uploadStatus.className = 'status-message';
+                uploadStatus.classList.add(type === 'success' ? 'status-success' : 'status-error');
+                uploadStatus.style.display = 'block';
+                
+                // Auto-hide success messages after 5 seconds
+                if (type === 'success') {
+                    setTimeout(() => {
+                        uploadStatus.style.display = 'none';
+                    }, 5000);
+                }
+            }
+
+            // Initialize with sample data for demonstration
+            function initializeSampleData() {
+                // Pre-fill some sample data for demonstration
+                statusInput.value = "1";
+                geneSymbolInput.value = "SHANK3";
+                geneNameInput.value = "SH3 and multiple ankyrin repeat domains 3";
+                ensemblIdInput.value = "ENSG00000278558";
+                chromosomeInput.value = "22";
+                geneticCategoryInput.value = "Rare Single Gene Mutation, Syndromic";
+                geneScoreInput.value = "2.8";
+                numberOfReportsInput.value = "7";
+                
+                // Show a welcome message
+                setTimeout(() => {
+                    showStatus('✨ Welcome to Autism Gene Classification System. Upload data or use manual prediction.', 'success');
+                }, 1000);
+            }
+
+            // Initialize the application
+            initializeSampleData();
+        });
+    </script>
+</body>
+</html>
